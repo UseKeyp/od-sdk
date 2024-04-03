@@ -53,6 +53,7 @@ export class BasicActions {
 
     private addressList: ContractList
     private tokenList: TokenList
+    private network: GebDeployment
     private proxyActionCore: types.IBasicActions
     private HaiProxyActionCore: types.HAIBasicActions
     private proxyActionGlobalSettlement: types.IGlobalSettlementActions
@@ -71,6 +72,7 @@ export class BasicActions {
     ) {
         this.addressList = getAddressList(network)
         this.tokenList = getTokenList(network)
+        this.network = network
 
         this.proxy = types.ODProxy__factory.connect(proxyAddress, this.chainProvider)
         this.HaiProxy = types.IHaiProxy__factory.connect(proxyAddress, this.chainProvider)
@@ -165,7 +167,7 @@ export class BasicActions {
     }
 
     generateDebt(safe: BigNumberish, wad: BigNumberish): Promise<ethers.PopulatedTransaction> {
-        if (this.addressList.GEB_TAX_COLLECTOR !== NULL_ADDRESS) {
+        if (this.network === 'optimism') {
             return this.getProxiedTransactionRequest(
                 this.HaiProxyActionCore.populateTransaction.generateDebt(
                     this.addressList.SAFE_MANAGER,
@@ -209,7 +211,7 @@ export class BasicActions {
         deltaWad: BigNumberish
     ): Promise<ethers.PopulatedTransaction> {
         let collateralJoin = this.tokenList[collateralName].collateralJoin
-        if (this.addressList.GEB_TAX_COLLECTOR !== NULL_ADDRESS) {
+        if (this.network === 'optimism') {
             return this.getProxiedTransactionRequest(
                 this.HaiProxyActionCore.populateTransaction.lockTokenCollateralAndGenerateDebt(
                     this.addressList.SAFE_MANAGER,
@@ -241,7 +243,7 @@ export class BasicActions {
     ): Promise<ethers.PopulatedTransaction> {
         let collateralJoin = this.tokenList[collateralName].collateralJoin
         let collateralType = this.tokenList[collateralName].bytes32String
-        if (this.addressList.GEB_TAX_COLLECTOR !== NULL_ADDRESS) {
+        if (this.network === 'optimism') {
             return this.getProxiedTransactionRequest(
                 this.HaiProxyActionCore.populateTransaction.openLockTokenCollateralAndGenerateDebt(
                     this.addressList.SAFE_MANAGER,
@@ -274,7 +276,7 @@ export class BasicActions {
     }
 
     repayAllDebt(safe: BigNumberish): Promise<ethers.PopulatedTransaction> {
-        if (this.addressList.GEB_TAX_COLLECTOR !== NULL_ADDRESS) {
+        if (this.network === 'optimism') {
             return this.getProxiedTransactionRequest(
                 this.HaiProxyActionCore.populateTransaction.repayAllDebt(
                     this.addressList.SAFE_MANAGER,
@@ -299,7 +301,7 @@ export class BasicActions {
         collateralAmount: BigNumberish
     ): Promise<ethers.PopulatedTransaction> {
         let collateralJoin = this.tokenList[collateralName].collateralJoin
-        if (this.addressList.GEB_TAX_COLLECTOR !== NULL_ADDRESS) {
+        if (this.network === 'optimism') {
             return this.getProxiedTransactionRequest(
                 this.HaiProxyActionCore.populateTransaction.repayAllDebtAndFreeTokenCollateral(
                     this.addressList.SAFE_MANAGER,
@@ -323,7 +325,7 @@ export class BasicActions {
     }
 
     repayDebt(safe: BigNumberish, wad: BigNumberish): Promise<ethers.PopulatedTransaction> {
-        if (this.addressList.GEB_TAX_COLLECTOR !== NULL_ADDRESS) {
+        if (this.network === 'optimism') {
             return this.getProxiedTransactionRequest(
                 this.HaiProxyActionCore.populateTransaction.repayDebt(
                     this.addressList.SAFE_MANAGER,
@@ -351,7 +353,7 @@ export class BasicActions {
         deltaWad: BigNumberish
     ): Promise<ethers.PopulatedTransaction> {
         let collateralJoin = this.tokenList[collateralName].collateralJoin
-        if (this.addressList.GEB_TAX_COLLECTOR !== NULL_ADDRESS) {
+        if (this.network === 'optimism') {
             return this.getProxiedTransactionRequest(
                 this.HaiProxyActionCore.populateTransaction.repayDebtAndFreeTokenCollateral(
                     this.addressList.SAFE_MANAGER,
