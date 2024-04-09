@@ -167,7 +167,64 @@ export type TokenList = {
 }
 
 const tokens: Record<GebDeployment, TokenList> = {
-    arbitrum: {},
+    arbitrum: {
+        OD: {
+            address: '0x0',
+            decimals: 18,
+            symbol: 'OD',
+            bytes32String: OD,
+            collateralJoin: '',
+            collateralAuctionHouse: '',
+            isCollateral: false,
+            camelotPoolAddress: '0x0',
+        },
+        ODG: {
+            address: '0x0',
+            decimals: 18,
+            symbol: 'ODG',
+            bytes32String: '',
+            collateralJoin: '',
+            collateralAuctionHouse: '',
+            isCollateral: false,
+        },
+        WETH: {
+            address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
+            collateralJoin: '',
+            collateralAuctionHouse: '',
+            decimals: 18,
+            symbol: 'WETH',
+            bytes32String: WETH,
+            isCollateral: false,
+            chainlinkRelayer: '0x0',
+        },
+        WSTETH: {
+            address: '0x5979D7b546E38E414F7E9822514be443A4800529',
+            collateralJoin: '0x0',
+            collateralAuctionHouse: '0x0',
+            decimals: 18,
+            symbol: 'WSTETH',
+            bytes32String: WSTETH,
+            isCollateral: true,
+        },
+        RETH: {
+            address: '0xEC70Dcb4A1EFa46b8F2D97C310C9c4790ba5ffA8',
+            collateralJoin: '0x0',
+            collateralAuctionHouse: '0x0',
+            decimals: 3,
+            symbol: 'RETH',
+            bytes32String: RETH,
+            isCollateral: true,
+        },
+        // ARB: {
+        //     address: '0x912CE59144191C1204E64559FE8253a0e49E6548',
+        //     collateralJoin: '0x0',
+        //     collateralAuctionHouse: '0x0',
+        //     decimals: 18,
+        //     symbol: 'ARB',
+        //     bytes32String: ARB,
+        //     isCollateral: true,
+        // },
+    },
     'arbitrum-sepolia': {
         OD: {
             address: '0x0006d00Ae8375BDb0b10fBb100490CD5504fD802',
