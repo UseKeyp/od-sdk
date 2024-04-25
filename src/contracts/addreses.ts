@@ -176,7 +176,7 @@ const tokens: Record<GebDeployment, TokenList> = {
             collateralJoin: '',
             collateralAuctionHouse: '',
             isCollateral: false,
-            camelotPoolAddress: '0x0',
+            camelotPoolAddress: '0x824959a55907d5350e73e151ff48dabc5a37a657',
         },
         ODG: {
             address: '0x000D636bD52BFc1B3a699165Ef5aa340BEA8939c',
@@ -186,6 +186,7 @@ const tokens: Record<GebDeployment, TokenList> = {
             collateralJoin: '',
             collateralAuctionHouse: '',
             isCollateral: false,
+            camelotPoolAddress: '0xf935263c9950eb2881ff58bd6a76c3d2564a78d5',
         },
         WETH: {
             address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
@@ -210,7 +211,7 @@ const tokens: Record<GebDeployment, TokenList> = {
             address: '0xEC70Dcb4A1EFa46b8F2D97C310C9c4790ba5ffA8',
             collateralJoin: '0xC215F3509AFbB303Bf4a20CBFAA5382fad9bEA1D',
             collateralAuctionHouse: '0x51a423B43101B219a9ECdEC67525896d856186Ec',
-            decimals: 3,
+            decimals: 18,
             symbol: 'RETH',
             bytes32String: RETH,
             isCollateral: true,
