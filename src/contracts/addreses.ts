@@ -196,7 +196,7 @@ const tokens: Record<GebDeployment, TokenList> = {
             symbol: 'WETH',
             bytes32String: WETH,
             isCollateral: false,
-            chainlinkRelayer: '0x0',
+            chainlinkRelayer: '0x3e6C1621f674da311E57646007fBfAd857084383',
         },
         WSTETH: {
             address: '0x5979D7b546E38E414F7E9822514be443A4800529',
