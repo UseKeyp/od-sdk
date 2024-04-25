@@ -24,7 +24,21 @@ export async function fetchPoolData(geb: Geb): Promise<PoolData> {
     try {
         const uniV3PoolAddress = geb.tokenList['OD'].camelotPoolAddress
 
-        const OD_balance = await geb.contracts.systemCoin.balanceOf(uniV3PoolAddress)
+        if (!uniV3PoolAddress) {
+            return {
+                OD_balance: '0',
+                WETH_balance: '0',
+                totalLiquidityUSD: '0',
+            }
+        }
+
+        const OD_contract = new ethers.Contract(
+            geb.contracts.systemCoin.address.toString(),
+            WETH9__factory.abi,
+            geb.provider
+        )
+
+        const OD_balance = await OD_contract.balanceOf(uniV3PoolAddress.toString())
 
         const WETH_address = geb.tokenList['WETH'].address
 
@@ -32,25 +46,36 @@ export async function fetchPoolData(geb: Geb): Promise<PoolData> {
 
         const WETH_balance = await WETH_contract.balanceOf(uniV3PoolAddress)
 
-        const OD_market_price = await geb.contracts.oracleRelayer.marketPrice()
-
+        const oracleRelayerContract = new ethers.Contract(
+            geb.contracts.oracleRelayer.address,
+            ['function marketPrice() external view returns (uint256)'],
+            geb.provider
+        )
         const chainlinkRelayerContract = new ethers.Contract(
             geb.tokenList['WETH'].chainlinkRelayer,
             ['function getResultWithValidity() external view returns (uint256 _result, bool _validity)'],
             geb.provider
         )
 
+        const OD_market_price = await oracleRelayerContract.marketPrice()
+
         const WETH_market_price = await chainlinkRelayerContract.getResultWithValidity()
 
         const OD_market_price_float = parseFloat(ethers.utils.formatEther(OD_market_price))
-
         const WETH_market_price_float = parseFloat(ethers.utils.formatEther(WETH_market_price._result))
 
         const OD_market_cap = OD_market_price_float * parseFloat(ethers.utils.formatEther(OD_balance))
-
         const WETH_market_cap = WETH_market_price_float * parseFloat(ethers.utils.formatEther(WETH_balance))
 
         const total_market_cap = OD_market_cap + WETH_market_cap
+
+        // console.log(OD_balance, 'OD_balance')
+        // console.log(OD_market_price, 'OD_market_price')
+        // console.log(WETH_balance, 'WETH_balance')
+        // console.log(WETH_market_price, 'WETH_market_price')
+
+        // console.log(OD_market_cap, 'OD_market_cap')
+        // console.log(WETH_market_cap, 'WETH_market_cap')
 
         return {
             OD_balance: OD_balance.toString(),
