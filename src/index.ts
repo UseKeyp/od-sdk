@@ -6,6 +6,7 @@ export * from './utils'
 export * from './errors'
 export * from './contracts'
 export * from './virtual'
+export * from './camelot'
 export * from './schema/auction'
 export * from './schema/safe'
 
