@@ -5,11 +5,11 @@ import { Geb } from '../geb'
 import { fromBigNumber, multicall, CamelotMulticallRequest, SECONDS_IN_YEAR } from '../utils'
 
 export type NitroPoolDetails = {
-    tvl: number,
+    tvl: number
     pendingRewards: {
-        pending1: number,
-        pending2: number,
-    },
+        pending1: number
+        pending2: number
+    }
     settings: {
         startTime: BigNumber
         endTime: BigNumber
@@ -35,11 +35,15 @@ export type NitroPoolDetails = {
 
 type AvailableDepositTypes = 'WSTETH' | 'RETH'
 
-const fetchNitroPool = async (geb: Geb, collateralType: AvailableDepositTypes, address: string | null): Promise<NitroPoolDetails> => {
+const fetchNitroPool = async (
+    geb: Geb,
+    collateralType: AvailableDepositTypes,
+    address: string | null
+): Promise<NitroPoolDetails> => {
     const ODGAddress = geb.tokenList['ODG'].address
     const collateralAddress = geb.tokenList[collateralType].address
     const collateralChainlinkRelayer = geb.tokenList[collateralType].chainlinkRelayer
-    const odgChainlinkRelayerAddress = geb.tokenList['ODG'].chainlinkRelayer;
+    const odgChainlinkRelayerAddress = geb.tokenList['ODG'].chainlinkRelayer
 
     if (!ODGAddress || !collateralAddress || !collateralChainlinkRelayer) {
         console.warn('Missing token info in tokenlist')
@@ -82,13 +86,13 @@ const fetchNitroPool = async (geb: Geb, collateralType: AvailableDepositTypes, a
         odgChainlinkRelayerAddress,
         ['function getResultWithValidity() external view returns (uint256 _result, bool _validity)'],
         geb.provider
-    );
+    )
 
-    const [odgPrice, odgPriceValidity] = await chainlinkRelayerContractODG.getResultWithValidity();
+    const [odgPrice, odgPriceValidity] = await chainlinkRelayerContractODG.getResultWithValidity()
 
     const [collateralPrice, collateralPriceValidity] = await chainlinkRelayerContract.getResultWithValidity()
 
-    const odgMarketPriceFloat = parseFloat(ethers.utils.formatEther(odgPrice));
+    const odgMarketPriceFloat = parseFloat(ethers.utils.formatEther(odgPrice))
 
     // TODO: Collateral price is invalid for some reason so just doing ODG validity price check for now
     if (!odgPriceValidity) {
@@ -162,13 +166,13 @@ const fetchNitroPool = async (geb: Geb, collateralType: AvailableDepositTypes, a
     ] = results as [
         { returnData: [any, any, BigNumber[], BigNumber[]] },
         BigNumber,
-            {
-                totalDepositAmount: BigNumber
-                rewardDebtToken1: BigNumber
-                rewardDebtToken2: BigNumber
-                pendingRewardsToken1: BigNumber
-                pendingRewardsToken2: BigNumber
-            } | null
+        {
+            totalDepositAmount: BigNumber
+            rewardDebtToken1: BigNumber
+            rewardDebtToken2: BigNumber
+            pendingRewardsToken1: BigNumber
+            pendingRewardsToken2: BigNumber
+        } | null
     ]
 
     const poolODGBalance = fromBigNumber(poolODGBalanceBN)

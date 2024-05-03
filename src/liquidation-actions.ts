@@ -20,7 +20,7 @@ export class LiquidationActions {
     liquidateSAFE(safeId: BigNumberish): Promise<ethers.PopulatedTransaction> {
         return this.contracts.safeManager
             .safeData(safeId)
-            .then((safeData) =>
+            .then((safeData: any) =>
                 this.contracts.liquidationEngine.populateTransaction.liquidateSAFE(
                     safeData.collateralType,
                     safeData.safeHandler
