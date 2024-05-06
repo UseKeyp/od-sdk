@@ -35,20 +35,19 @@ export type NitroPoolDetails = {
     apy: number
 }
 
-type AvailableDepositTypes = 'WSTETH'
 
 const fetchNitroPool = async (
     geb: Geb,
-    collateralType: AvailableDepositTypes,
-    address: string,
+    poolAddress: string,
+    userAddress: string,
     tokenAddress: string,
     collateralAddress: string
 ): Promise<NitroPoolDetails> => {
     const token = geb.getErc20Contract(tokenAddress)
     const collateral = geb.getErc20Contract(collateralAddress)
-    const camelotNitroPool = await geb.contracts[`camelot${collateralType}NitroPool`]
+    const camelotNitroPool = geb.getCamelotContract(poolAddress)
 
-    // @to-do: replace with actual market price once pool is deployed
+    // @to-do: move out and replace with actual market price once pool is deployed
     // const [odgPrice, odgPriceValidity] = await chainlinkRelayerContractODG.getResultWithValidity()
     // const [collateralPrice, collateralPriceValidity] = await chainlinkRelayerContract.getResultWithValidity()
     // const odgMarketPriceFloat = parseFloat(ethers.utils.formatEther(odgPrice))
@@ -68,7 +67,7 @@ const fetchNitroPool = async (
             {
                 contract: camelotNitroPool,
                 function: 'pendingRewards',
-                args: [address],
+                args: [userAddress],
             },
             {
                 contract: camelotNitroPool,
@@ -97,7 +96,7 @@ const fetchNitroPool = async (
             },
         ]),
         camelotNitroPool.rewardsToken1PerSecond(),
-        address ? camelotNitroPool.userInfo(address) : Promise.resolve(null),
+        userAddress ? camelotNitroPool.userInfo(userAddress) : Promise.resolve(null),
     ])
 
     const [
@@ -138,4 +137,4 @@ const fetchNitroPool = async (
     }
 }
 
-export { fetchNitroPool, AvailableDepositTypes }
+export { fetchNitroPool }

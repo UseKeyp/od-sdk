@@ -81,7 +81,6 @@ export class ContractApis {
             const collateralAuctionHouse = types.ICollateralAuctionHouse__factory.connect(token.collateralAuctionHouse, signerOrProvider)            
             return { ...accum, [token.symbol]: collateralAuctionHouse }
         }, {})
-        this.camelotWSTETHNitroPool = types.CamelotNitroPool__factory.connect(addressList.CAMELOT_WSTETH_SILO_NITRO_POOL, signerOrProvider)
         this.multicall = types.Multicall3__factory.connect(addressList.MULTICALL, signerOrProvider)
     }
 }
