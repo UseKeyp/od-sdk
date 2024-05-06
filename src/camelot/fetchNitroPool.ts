@@ -35,7 +35,6 @@ export type NitroPoolDetails = {
     apy: number
 }
 
-
 const fetchNitroPool = async (
     geb: Geb,
     poolAddress: string,
