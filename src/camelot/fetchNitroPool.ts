@@ -30,6 +30,8 @@ export type NitroPoolDetails = {
         pendingRewardsToken1: BigNumber
         pendingRewardsToken2: BigNumber
     } | null
+    nitroRewards1: any
+    nitroRewards2: any
     apy: number
 }
 
@@ -40,94 +42,88 @@ const fetchNitroPool = async (
     collateralType: AvailableDepositTypes,
     address: string | null
 ): Promise<NitroPoolDetails> => {
-    const ODGAddress = geb.tokenList['ODG'].address
-    const collateralAddress = geb.tokenList[collateralType].address
-    const collateralChainlinkRelayer = geb.tokenList[collateralType].chainlinkRelayer
-    const odgChainlinkRelayerAddress = geb.tokenList['ODG'].chainlinkRelayer
+    // const ODGAddress = geb.tokenList['ODG'].address
+    // const collateralAddress = geb.tokenList[collateralType].address
+    // const collateralChainlinkRelayer = geb.tokenList[collateralType].chainlinkRelayer
+    // const odgChainlinkRelayerAddress = geb.tokenList['ODG'].chainlinkRelayer
 
-    if (!ODGAddress || !collateralAddress || !collateralChainlinkRelayer) {
-        console.warn('Missing token info in tokenlist')
-        return {
-            // tvl: 0,
-            pendingRewards: {
-                pending1: 0,
-                pending2: 0,
-            },
-            settings: {
-                startTime: BigNumber.from(0),
-                endTime: BigNumber.from(0),
-                harvestStartTime: BigNumber.from(0),
-                depositEndTime: BigNumber.from(0),
-                lockDurationReq: BigNumber.from(0),
-                lockEndReq: BigNumber.from(0),
-                depositAmountReq: BigNumber.from(0),
-                whitelist: false,
-                description: '',
-            },
-            rewardsPerSecond: 0,
-            lpTokenBalance: 0,
-            userInfo: null,
-            apy: 0,
-        }
-    }
+    // if (!ODGAddress || !collateralAddress || !collateralChainlinkRelayer) {
+    //     console.warn('Missing token info in tokenlist')
+    //     return {
+    //         // tvl: 0,
+    //         pendingRewards: {
+    //             pending1: 0,
+    //             pending2: 0,
+    //         },
+    //         settings: {
+    //             startTime: BigNumber.from(0),
+    //             endTime: BigNumber.from(0),
+    //             harvestStartTime: BigNumber.from(0),
+    //             depositEndTime: BigNumber.from(0),
+    //             lockDurationReq: BigNumber.from(0),
+    //             lockEndReq: BigNumber.from(0),
+    //             depositAmountReq: BigNumber.from(0),
+    //             whitelist: false,
+    //             description: '',
+    //         },
+    //         rewardsPerSecond: 0,
+    //         lpTokenBalance: 0,
+    //         userInfo: null,
+    //         apy: 0,
+    //     }
+    // }
 
     // const odg = geb.getErc20Contract(ODGAddress)
     // const collateral = geb.getErc20Contract(collateralAddress)
 
     const camelotNitroPool = await geb.contracts[`camelot${collateralType}NitroPool`]
 
-    const chainlinkRelayerContract = new ethers.Contract(
-        collateralChainlinkRelayer,
-        ['function getResultWithValidity() external view returns (uint256 _result, bool _validity)'],
-        geb.provider
-    )
+    // const chainlinkRelayerContract = new ethers.Contract(
+    //     collateralChainlinkRelayer,
+    //     ['function getResultWithValidity() external view returns (uint256 _result, bool _validity)'],
+    //     geb.provider
+    // )
 
-    const chainlinkRelayerContractODG = new ethers.Contract(
-        odgChainlinkRelayerAddress,
-        ['function getResultWithValidity() external view returns (uint256 _result, bool _validity)'],
-        geb.provider
-    )
+    // const chainlinkRelayerContractODG = new ethers.Contract(
+    //     odgChainlinkRelayerAddress,
+    //     ['function getResultWithValidity() external view returns (uint256 _result, bool _validity)'],
+    //     geb.provider
+    // )
 
-    const [odgPrice, odgPriceValidity] = await chainlinkRelayerContractODG.getResultWithValidity()
-
-    const [collateralPrice, collateralPriceValidity] = await chainlinkRelayerContract.getResultWithValidity()
-
-    const odgMarketPriceFloat = parseFloat(ethers.utils.formatEther(odgPrice))
-
-    // TODO: Collateral price is invalid for some reason so just doing ODG validity price check for now
-    if (!odgPriceValidity) {
-        console.warn('Chainlink price fetch invalid')
-        return {
-            // tvl: 0,
-            pendingRewards: {
-                pending1: 0,
-                pending2: 0,
-            },
-            settings: {
-                startTime: BigNumber.from(0),
-                endTime: BigNumber.from(0),
-                harvestStartTime: BigNumber.from(0),
-                depositEndTime: BigNumber.from(0),
-                lockDurationReq: BigNumber.from(0),
-                lockEndReq: BigNumber.from(0),
-                depositAmountReq: BigNumber.from(0),
-                whitelist: false,
-                description: '',
-            },
-            rewardsPerSecond: 0,
-            lpTokenBalance: 0,
-            userInfo: null,
-            apy: 0,
-        }
-    }
-
-    const collateralPriceFloat = parseFloat(ethers.utils.formatEther(collateralPrice))
+    // // TODO: Collateral price is invalid for some reason so just doing ODG validity price check for now
+    // if (!odgPriceValidity) {
+    //     console.warn('Chainlink price fetch invalid')
+    //     return {
+    //         // tvl: 0,
+    //         pendingRewards: {
+    //             pending1: 0,
+    //             pending2: 0,
+    //         },
+    //         settings: {
+    //             startTime: BigNumber.from(0),
+    //             endTime: BigNumber.from(0),
+    //             harvestStartTime: BigNumber.from(0),
+    //             depositEndTime: BigNumber.from(0),
+    //             lockDurationReq: BigNumber.from(0),
+    //             lockEndReq: BigNumber.from(0),
+    //             depositAmountReq: BigNumber.from(0),
+    //             whitelist: false,
+    //             description: '',
+    //         },
+    //         rewardsPerSecond: 0,
+    //         lpTokenBalance: 0,
+    //         userInfo: null,
+    //         apy: 0,
+    //     }
+    // }
 
     const results = await Promise.all([
         multicall<
             [
                 CamelotMulticallRequest<CamelotNitroPool, 'pendingRewards'>,
-                CamelotMulticallRequest<CamelotNitroPool, 'settings'>
+                CamelotMulticallRequest<CamelotNitroPool, 'settings'>,
+                CamelotMulticallRequest<CamelotNitroPool, 'rewardsToken1'>,
+                CamelotMulticallRequest<CamelotNitroPool, 'rewardsToken2'>
                 // CamelotMulticallRequest<ERC20, 'balanceOf'>,
                 // CamelotMulticallRequest<ERC20, 'balanceOf'>
             ]
@@ -142,16 +138,16 @@ const fetchNitroPool = async (
                 function: 'settings',
                 args: [],
             },
-            // {
-            //     contract: odg,
-            //     function: 'balanceOf',
-            //     args: [camelotNitroPool.address],
-            // },
-            // {
-            //     contract: collateral,
-            //     function: 'balanceOf',
-            //     args: [camelotNitroPool.address],
-            // },
+            {
+                contract: camelotNitroPool,
+                function: 'rewardsToken1',
+                args: [],
+            },
+            {
+                contract: camelotNitroPool,
+                function: 'rewardsToken2',
+                args: [],
+            },
         ]),
         camelotNitroPool.rewardsToken1PerSecond(),
         address ? camelotNitroPool.userInfo(address) : Promise.resolve(null),
@@ -159,7 +155,7 @@ const fetchNitroPool = async (
 
     const [
         {
-            returnData: [pendingRewards, settings],
+            returnData: [pendingRewards, settings, nitroRewards1, nitroRewards2],
         },
         nitroRewardsPerSecond,
         userInfo,
@@ -170,7 +166,7 @@ const fetchNitroPool = async (
     // const tvl = poolODGBalance * odgMarketPriceFloat + poolCollateralBalance * collateralPriceFloat
     const rewardsPerSecond = fromBigNumber(nitroRewardsPerSecond)
     const lpTokenBalance = userInfo ? fromBigNumber(userInfo.totalDepositAmount) : 0
-    const apy = (rewardsPerSecond * SECONDS_IN_YEAR * odgMarketPriceFloat) / 0
+    const apy = (rewardsPerSecond * SECONDS_IN_YEAR * 1) / 0
     return {
         // tvl,
         pendingRewards: {
@@ -180,6 +176,8 @@ const fetchNitroPool = async (
         settings,
         rewardsPerSecond,
         lpTokenBalance,
+        nitroRewards1,
+        nitroRewards2,
         userInfo,
         apy,
     }
