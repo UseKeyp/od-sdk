@@ -121,7 +121,7 @@ const fetchNitroPool = async (
     const tvl = poolTokenBalance * 1 + poolCollateralBalance * 1
     const rewardsPerSecond = fromBigNumber(nitroRewardsPerSecond)
     const lpTokenBalance = userInfo ? fromBigNumber(userInfo.totalDepositAmount) : 0
-    const apy = (rewardsPerSecond * SECONDS_IN_YEAR * 1) / 0
+    const apy = (rewardsPerSecond * SECONDS_IN_YEAR * 1) / tvl
     return {
         tvl,
         pendingRewards: {
