@@ -5,7 +5,14 @@ import { TokenList, getTokenList, getSubgraph } from './contracts/addreses'
 import { ContractList, GebDeployment, getAddressList } from './contracts/index'
 import { GebError, GebErrorTypes } from './errors'
 import { BasicActions } from './proxy-action'
-import { ERC20, ERC20__factory, CamelotNitroPool__factory } from './typechained'
+import {
+    ERC20,
+    ERC20__factory,
+    CamelotNitroPool__factory,
+    NFTPool__factory,
+    DefiEdgeTwapStrategy__factory,
+    AlgebraPool__factory,
+} from './typechained'
 import { NULL_ADDRESS } from './utils'
 import { LiquidationActions } from './liquidation-actions'
 
@@ -156,5 +163,17 @@ export class Geb {
 
     public getCamelotContract(poolAddress: string) {
         return CamelotNitroPool__factory.connect(poolAddress, this.signer || this.provider)
+    }
+
+    public getNFTPoolContract(nftPoolAddress: string) {
+        return NFTPool__factory.connect(nftPoolAddress, this.signer || this.provider)
+    }
+
+    public getDefiEdgeTwapStrategyContract(strategyAddress: string) {
+        return DefiEdgeTwapStrategy__factory.connect(strategyAddress, this.signer || this.provider)
+    }
+
+    public getAlgebraPoolContract(algebraPoolAddress: string) {
+        return AlgebraPool__factory.connect(algebraPoolAddress, this.signer || this.provider)
     }
 }

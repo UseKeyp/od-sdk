@@ -33,17 +33,15 @@ export type NitroPoolDetails = {
     nitroRewards1: any
     nitroRewards2: any
     apy: number
+    collateralTokens: {
+        [symbol: string]: {
+            balance: number
+            address: string
+        }
+    }
 }
 
-const fetchNitroPool = async (
-    geb: Geb,
-    poolAddress: string,
-    userAddress: string,
-    tokenAddress: string,
-    collateralAddress: string
-): Promise<NitroPoolDetails> => {
-    const collateral1 = geb.getErc20Contract(tokenAddress)
-    const collateral2 = geb.getErc20Contract(collateralAddress)
+const fetchNitroPool = async (geb: Geb, poolAddress: string, userAddress: string): Promise<NitroPoolDetails> => {
     const camelotNitroPool = geb.getCamelotContract(poolAddress)
 
     // @to-do: move out and replace with actual market price once pool is deployed
@@ -59,8 +57,7 @@ const fetchNitroPool = async (
                 CamelotMulticallRequest<CamelotNitroPool, 'settings'>,
                 CamelotMulticallRequest<CamelotNitroPool, 'rewardsToken1'>,
                 CamelotMulticallRequest<CamelotNitroPool, 'rewardsToken2'>,
-                CamelotMulticallRequest<ERC20, 'balanceOf'>,
-                CamelotMulticallRequest<ERC20, 'balanceOf'>
+                CamelotMulticallRequest<CamelotNitroPool, 'nftPool'>
             ]
         >(geb, [
             {
@@ -84,14 +81,9 @@ const fetchNitroPool = async (
                 args: [],
             },
             {
-                contract: collateral1,
-                function: 'balanceOf',
-                args: [camelotNitroPool.address],
-            },
-            {
-                contract: collateral2,
-                function: 'balanceOf',
-                args: [camelotNitroPool.address],
+                contract: camelotNitroPool,
+                function: 'nftPool',
+                args: [],
             },
         ]),
         camelotNitroPool.rewardsToken1PerSecond(),
@@ -100,21 +92,78 @@ const fetchNitroPool = async (
 
     const [
         {
-            returnData: [
-                pendingRewards,
-                settings,
-                nitroRewards1,
-                nitroRewards2,
-                poolCollateral1BalanceBN,
-                poolCollateral2BalanceBN,
-            ],
+            returnData: [pendingRewards, settings, nitroRewards1, nitroRewards2, nftPool],
         },
         nitroRewardsPerSecond,
         userInfo,
     ] = results
+    // Get NFT pool info
+    const nftPoolInfo = await geb.getNFTPoolContract(nftPool[0]).getPoolInfo()
+    // Fetch pool info from DefiEdgeTwapStrategy
+    const defiEdgeInfo = await geb.getDefiEdgeTwapStrategyContract(nftPoolInfo.lpToken).pool()
+    // pool info includes collateral tokens
+    const poolInfo = await geb.getAlgebraPoolContract(defiEdgeInfo)
 
-    const poolCollateral1Balance = fromBigNumber(poolCollateral1BalanceBN[0])
-    const poolCollateral2Balance = fromBigNumber(poolCollateral2BalanceBN[0])
+    // Fetch collateral token balances
+    const collateralToken0Address = await poolInfo.token0()
+    const collateralToken1Address = await poolInfo.token1()
+    const collateralToken0 = geb.getErc20Contract(collateralToken0Address)
+    const collateralToken1 = geb.getErc20Contract(collateralToken1Address)
+
+    const tokenResults = await Promise.all([
+        multicall<
+            [
+                CamelotMulticallRequest<ERC20, 'balanceOf'>,
+                CamelotMulticallRequest<ERC20, 'balanceOf'>,
+                CamelotMulticallRequest<ERC20, 'symbol'>,
+                CamelotMulticallRequest<ERC20, 'symbol'>
+            ]
+        >(geb, [
+            {
+                contract: collateralToken0,
+                function: 'balanceOf',
+                args: [camelotNitroPool.address],
+            },
+            {
+                contract: collateralToken1,
+                function: 'balanceOf',
+                args: [camelotNitroPool.address],
+            },
+            {
+                contract: collateralToken0,
+                function: 'symbol',
+                args: [],
+            },
+            {
+                contract: collateralToken1,
+                function: 'symbol',
+                args: [],
+            },
+        ]),
+    ])
+
+    const [
+        {
+            returnData: [
+                poolCollateral0BalanceBN,
+                poolCollateral1BalanceBN,
+                poolCollateral0Symbol,
+                poolCollateral1Symbol,
+            ],
+        },
+    ] = tokenResults
+    const collateralTokens = {
+        [poolCollateral0Symbol[0]]: {
+            balance: fromBigNumber(poolCollateral0BalanceBN[0]),
+            address: collateralToken0Address,
+        },
+        [poolCollateral1Symbol[0]]: {
+            balance: fromBigNumber(poolCollateral1BalanceBN[0]),
+            address: collateralToken1Address,
+        },
+    }
+    const poolCollateral1Balance = fromBigNumber(poolCollateral0BalanceBN[0])
+    const poolCollateral2Balance = fromBigNumber(poolCollateral1BalanceBN[0])
     // 1s should be replaced with tokenMarketPriceFloat & collateralMarketPriceFloat
     const tvl = poolCollateral1Balance * 1 + poolCollateral2Balance * 1
     const rewardsPerSecond = fromBigNumber(nitroRewardsPerSecond)
@@ -133,6 +182,7 @@ const fetchNitroPool = async (
         nitroRewards2,
         userInfo,
         apy,
+        collateralTokens,
     }
 }
 
