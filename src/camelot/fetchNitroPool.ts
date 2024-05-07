@@ -42,8 +42,8 @@ const fetchNitroPool = async (
     tokenAddress: string,
     collateralAddress: string
 ): Promise<NitroPoolDetails> => {
-    const token = geb.getErc20Contract(tokenAddress)
-    const collateral = geb.getErc20Contract(collateralAddress)
+    const collateral1 = geb.getErc20Contract(tokenAddress)
+    const collateral2 = geb.getErc20Contract(collateralAddress)
     const camelotNitroPool = geb.getCamelotContract(poolAddress)
 
     // @to-do: move out and replace with actual market price once pool is deployed
@@ -84,12 +84,12 @@ const fetchNitroPool = async (
                 args: [],
             },
             {
-                contract: token,
+                contract: collateral1,
                 function: 'balanceOf',
                 args: [camelotNitroPool.address],
             },
             {
-                contract: collateral,
+                contract: collateral2,
                 function: 'balanceOf',
                 args: [camelotNitroPool.address],
             },
@@ -105,18 +105,18 @@ const fetchNitroPool = async (
                 settings,
                 nitroRewards1,
                 nitroRewards2,
-                poolTokenBalanceBN,
-                poolCollateralBalanceBN,
+                poolCollateral1BalanceBN,
+                poolCollateral2BalanceBN,
             ],
         },
         nitroRewardsPerSecond,
         userInfo,
     ] = results
 
-    const poolTokenBalance = fromBigNumber(poolTokenBalanceBN[0])
-    const poolCollateralBalance = fromBigNumber(poolCollateralBalanceBN[0])
+    const poolCollateral1Balance = fromBigNumber(poolCollateral1BalanceBN[0])
+    const poolCollateral2Balance = fromBigNumber(poolCollateral2BalanceBN[0])
     // 1s should be replaced with tokenMarketPriceFloat & collateralMarketPriceFloat
-    const tvl = poolTokenBalance * 1 + poolCollateralBalance * 1
+    const tvl = poolCollateral1Balance * 1 + poolCollateral2Balance * 1
     const rewardsPerSecond = fromBigNumber(nitroRewardsPerSecond)
     const lpTokenBalance = userInfo ? fromBigNumber(userInfo.totalDepositAmount) : 0
     const apy = (rewardsPerSecond * SECONDS_IN_YEAR * 1) / tvl
