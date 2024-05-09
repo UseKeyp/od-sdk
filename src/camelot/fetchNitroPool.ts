@@ -1,8 +1,15 @@
-import { BigNumber } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 
-import { CamelotNitroPool, ERC20 } from '../typechained'
+import {
+    AlgebraPool__factory,
+    CamelotNitroPool__factory,
+    DefiEdgeTwapStrategy__factory,
+    ERC20__factory,
+    NFTPool__factory,
+} from '../typechained'
 import { Geb } from '../geb'
-import { fromBigNumber, multicall, CamelotMulticallRequest, SECONDS_IN_YEAR } from '../utils'
+import { fromBigNumber, SECONDS_IN_YEAR } from '../utils'
+import { getOracleData } from '../virtual'
 
 export type NitroPoolDetails = {
     tvl: number
@@ -30,145 +37,114 @@ export type NitroPoolDetails = {
         pendingRewardsToken1: BigNumber
         pendingRewardsToken2: BigNumber
     } | null
-    nitroRewards1: any
-    nitroRewards2: any
+    rewardTokens: {
+        address: string
+        symbol: string
+    }[]
     apy: number
     collateralTokens: {
-        [symbol: string]: {
-            balance: number
-            address: string
-        }
-    }
+        symbol: string
+        balance: number
+        address: string
+        price: number
+    }[]
 }
 
 const fetchNitroPool = async (geb: Geb, poolAddress: string, userAddress: string): Promise<NitroPoolDetails> => {
-    const camelotNitroPool = geb.getCamelotContract(poolAddress)
-
-    // @to-do: move out and replace with actual market price once pool is deployed
-    // const [odgPrice, odgPriceValidity] = await chainlinkRelayerContractODG.getResultWithValidity()
-    // const [collateralPrice, collateralPriceValidity] = await chainlinkRelayerContract.getResultWithValidity()
-    // const odgMarketPriceFloat = parseFloat(ethers.utils.formatEther(odgPrice))
-    // const collateralPriceFloat = parseFloat(ethers.utils.formatEther(collateralPrice))
-
-    const results = await Promise.all([
-        multicall<
-            [
-                CamelotMulticallRequest<CamelotNitroPool, 'pendingRewards'>,
-                CamelotMulticallRequest<CamelotNitroPool, 'settings'>,
-                CamelotMulticallRequest<CamelotNitroPool, 'rewardsToken1'>,
-                CamelotMulticallRequest<CamelotNitroPool, 'rewardsToken2'>,
-                CamelotMulticallRequest<CamelotNitroPool, 'nftPool'>
-            ]
-        >(geb, [
-            {
-                contract: camelotNitroPool,
-                function: 'pendingRewards',
-                args: [userAddress],
-            },
-            {
-                contract: camelotNitroPool,
-                function: 'settings',
-                args: [],
-            },
-            {
-                contract: camelotNitroPool,
-                function: 'rewardsToken1',
-                args: [],
-            },
-            {
-                contract: camelotNitroPool,
-                function: 'rewardsToken2',
-                args: [],
-            },
-            {
-                contract: camelotNitroPool,
-                function: 'nftPool',
-                args: [],
-            },
-        ]),
-        camelotNitroPool.rewardsToken1PerSecond(),
-        userAddress ? camelotNitroPool.userInfo(userAddress) : Promise.resolve(null),
-    ])
+    const camelotNitroPool = new ethers.Contract(poolAddress, CamelotNitroPool__factory.abi, geb.provider)
 
     const [
-        {
-            returnData: [pendingRewards, settings, nitroRewards1, nitroRewards2, nftPool],
-        },
+        pendingRewards,
+        settings,
+        nitroRewards1,
+        nitroRewards2,
+        nftPool,
         nitroRewardsPerSecond,
         userInfo,
-    ] = results
-    // Get NFT pool info
-    const nftPoolInfo = await geb.getNFTPoolContract(nftPool[0]).getPoolInfo()
-    // Fetch pool info from DefiEdgeTwapStrategy
-    const defiEdgeInfo = await geb.getDefiEdgeTwapStrategyContract(nftPoolInfo.lpToken).pool()
-    // pool info includes collateral tokens
-    const poolInfo = await geb.getAlgebraPoolContract(defiEdgeInfo)
+        oracleData
+    ] = await Promise.all([
+        camelotNitroPool.pendingRewards(userAddress),
+        camelotNitroPool.settings(),
+        camelotNitroPool.rewardsToken1(),
+        camelotNitroPool.rewardsToken2(),
+        camelotNitroPool.nftPool(),
+        camelotNitroPool.rewardsToken1PerSecond(),
+        userAddress ? camelotNitroPool.userInfo(userAddress) : Promise.resolve(null),
+        getOracleData(geb)
+    ]);
 
-    // Fetch collateral token balances
-    const collateralToken0Address = await poolInfo.token0()
-    const collateralToken1Address = await poolInfo.token1()
-    const collateralToken0 = geb.getErc20Contract(collateralToken0Address)
-    const collateralToken1 = geb.getErc20Contract(collateralToken1Address)
-
-    const tokenResults = await Promise.all([
-        multicall<
-            [
-                CamelotMulticallRequest<ERC20, 'balanceOf'>,
-                CamelotMulticallRequest<ERC20, 'balanceOf'>,
-                CamelotMulticallRequest<ERC20, 'symbol'>,
-                CamelotMulticallRequest<ERC20, 'symbol'>
-            ]
-        >(geb, [
-            {
-                contract: collateralToken0,
-                function: 'balanceOf',
-                args: [camelotNitroPool.address],
-            },
-            {
-                contract: collateralToken1,
-                function: 'balanceOf',
-                args: [camelotNitroPool.address],
-            },
-            {
-                contract: collateralToken0,
-                function: 'symbol',
-                args: [],
-            },
-            {
-                contract: collateralToken1,
-                function: 'symbol',
-                args: [],
-            },
-        ]),
-    ])
+    const rewardsContractToken1 = new ethers.Contract(nitroRewards1[0], ERC20__factory.abi, geb.provider)
+    const rewardsContractToken2 = new ethers.Contract(nitroRewards1[0], ERC20__factory.abi, geb.provider)
 
     const [
+        rewardsToken1Symbol,
+        rewardsToken2Symbol,
+        nftPoolInfo
+    ] = await Promise.all([
+        rewardsContractToken1.symbol(),
+        rewardsContractToken2.symbol(),
+        new ethers.Contract(nftPool, NFTPool__factory.abi, geb.provider).getPoolInfo()
+    ]);
+
+    const defiEdgeInfo = await new ethers.Contract(
+        nftPoolInfo.lpToken,
+        DefiEdgeTwapStrategy__factory.abi,
+        geb.provider
+    ).pool()
+
+    const poolInfo = await new ethers.Contract(defiEdgeInfo, AlgebraPool__factory.abi, geb.provider)
+
+    const [
+        collateralToken0Address,
+        collateralToken1Address
+    ] = await Promise.all([
+        poolInfo.token0(),
+        poolInfo.token1()
+    ]);
+
+    const collateralToken0 = new ethers.Contract(collateralToken0Address, ERC20__factory.abi, geb.provider)
+    const collateralToken1 = new ethers.Contract(collateralToken1Address, ERC20__factory.abi, geb.provider)
+
+    const [
+        poolCollateral0BalanceBN,
+        poolCollateral1BalanceBN,
+        poolCollateral0Symbol,
+        poolCollateral1Symbol
+    ] = await Promise.all([
+        collateralToken0.balanceOf(defiEdgeInfo),
+        collateralToken1.balanceOf(defiEdgeInfo),
+        collateralToken0.symbol(),
+        collateralToken1.symbol()
+    ]);
+
+    const { OD_market_price_float, WETH_market_price_float } = await getOracleData(geb)
+
+    const collateralTokens = [
         {
-            returnData: [
-                poolCollateral0BalanceBN,
-                poolCollateral1BalanceBN,
-                poolCollateral0Symbol,
-                poolCollateral1Symbol,
-            ],
-        },
-    ] = tokenResults
-    const collateralTokens = {
-        [poolCollateral0Symbol[0]]: {
-            balance: fromBigNumber(poolCollateral0BalanceBN[0]),
+            symbol: poolCollateral0Symbol,
+            balance: fromBigNumber(poolCollateral0BalanceBN),
             address: collateralToken0Address,
+            price: OD_market_price_float,
         },
-        [poolCollateral1Symbol[0]]: {
-            balance: fromBigNumber(poolCollateral1BalanceBN[0]),
+        {
+            symbol: poolCollateral1Symbol,
+            balance: fromBigNumber(poolCollateral1BalanceBN),
             address: collateralToken1Address,
+            price: WETH_market_price_float,
         },
-    }
-    const poolCollateral1Balance = fromBigNumber(poolCollateral0BalanceBN[0])
-    const poolCollateral2Balance = fromBigNumber(poolCollateral1BalanceBN[0])
-    // 1s should be replaced with tokenMarketPriceFloat & collateralMarketPriceFloat
-    const tvl = poolCollateral1Balance * 1 + poolCollateral2Balance * 1
+    ]
+    const rewardTokens = [
+        { address: nitroRewards1[0], symbol: rewardsToken1Symbol },
+        { address: nitroRewards2[0], symbol: rewardsToken2Symbol },
+    ]
+    const poolCollateral1Balance = fromBigNumber(poolCollateral0BalanceBN)
+    const poolCollateral2Balance = fromBigNumber(poolCollateral1BalanceBN)
+
+    const tvl = poolCollateral1Balance * OD_market_price_float + poolCollateral2Balance * WETH_market_price_float
     const rewardsPerSecond = fromBigNumber(nitroRewardsPerSecond)
     const lpTokenBalance = userInfo ? fromBigNumber(userInfo.totalDepositAmount) : 0
-    const apy = (rewardsPerSecond * SECONDS_IN_YEAR * 1) / tvl
+
+    const apy = (rewardsPerSecond * SECONDS_IN_YEAR * OD_market_price_float) / tvl
     return {
         tvl,
         pendingRewards: {
@@ -178,8 +154,7 @@ const fetchNitroPool = async (geb: Geb, poolAddress: string, userAddress: string
         settings,
         rewardsPerSecond,
         lpTokenBalance,
-        nitroRewards1,
-        nitroRewards2,
+        rewardTokens,
         userInfo,
         apy,
         collateralTokens,

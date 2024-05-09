@@ -15,6 +15,29 @@ export interface PoolData {
     totalLiquidityUSD: string
 }
 
+// @to-do: tokens: {address: string, symbol: string}[] make dynamic rn missing oracle addresses.
+export async function getOracleData(geb: Geb) {
+    const oracleRelayerContract = new ethers.Contract(
+        geb.contracts.oracleRelayer.address,
+        ['function marketPrice() external view returns (uint256)'],
+        geb.provider
+    )
+    const chainlinkRelayerContract = new ethers.Contract(
+        geb.tokenList['WETH'].chainlinkRelayer,
+        ['function getResultWithValidity() external view returns (uint256 _result, bool _validity)'],
+        geb.provider
+    )
+    const OD_market_price = await oracleRelayerContract.marketPrice()
+
+    const WETH_market_price = await chainlinkRelayerContract.getResultWithValidity()
+
+    const OD_market_price_float = parseFloat(ethers.utils.formatEther(OD_market_price))
+    const WETH_market_price_float = parseFloat(ethers.utils.formatEther(WETH_market_price._result))
+    return {
+        OD_market_price_float: OD_market_price_float,
+        WETH_market_price_float: WETH_market_price_float,
+    }
+}
 /**
  * Fetches the liquidity data for an OD-WETH pool
  * @param geb
@@ -46,23 +69,7 @@ export async function fetchPoolData(geb: Geb): Promise<PoolData> {
 
         const WETH_balance = await WETH_contract.balanceOf(uniV3PoolAddress)
 
-        const oracleRelayerContract = new ethers.Contract(
-            geb.contracts.oracleRelayer.address,
-            ['function marketPrice() external view returns (uint256)'],
-            geb.provider
-        )
-        const chainlinkRelayerContract = new ethers.Contract(
-            geb.tokenList['WETH'].chainlinkRelayer,
-            ['function getResultWithValidity() external view returns (uint256 _result, bool _validity)'],
-            geb.provider
-        )
-
-        const OD_market_price = await oracleRelayerContract.marketPrice()
-
-        const WETH_market_price = await chainlinkRelayerContract.getResultWithValidity()
-
-        const OD_market_price_float = parseFloat(ethers.utils.formatEther(OD_market_price))
-        const WETH_market_price_float = parseFloat(ethers.utils.formatEther(WETH_market_price._result))
+        const { OD_market_price_float, WETH_market_price_float } = await getOracleData(geb)
 
         const OD_market_cap = OD_market_price_float * parseFloat(ethers.utils.formatEther(OD_balance))
         const WETH_market_cap = WETH_market_price_float * parseFloat(ethers.utils.formatEther(WETH_balance))
