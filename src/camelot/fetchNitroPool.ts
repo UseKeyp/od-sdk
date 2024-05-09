@@ -61,7 +61,7 @@ const fetchNitroPool = async (geb: Geb, poolAddress: string, userAddress: string
         nftPool,
         nitroRewardsPerSecond,
         userInfo,
-        oracleData
+        oracleData,
     ] = await Promise.all([
         camelotNitroPool.pendingRewards(userAddress),
         camelotNitroPool.settings(),
@@ -70,21 +70,17 @@ const fetchNitroPool = async (geb: Geb, poolAddress: string, userAddress: string
         camelotNitroPool.nftPool(),
         camelotNitroPool.rewardsToken1PerSecond(),
         userAddress ? camelotNitroPool.userInfo(userAddress) : Promise.resolve(null),
-        getOracleData(geb)
-    ]);
+        getOracleData(geb),
+    ])
 
     const rewardsContractToken1 = new ethers.Contract(nitroRewards1[0], ERC20__factory.abi, geb.provider)
     const rewardsContractToken2 = new ethers.Contract(nitroRewards1[0], ERC20__factory.abi, geb.provider)
 
-    const [
-        rewardsToken1Symbol,
-        rewardsToken2Symbol,
-        nftPoolInfo
-    ] = await Promise.all([
+    const [rewardsToken1Symbol, rewardsToken2Symbol, nftPoolInfo] = await Promise.all([
         rewardsContractToken1.symbol(),
         rewardsContractToken2.symbol(),
-        new ethers.Contract(nftPool, NFTPool__factory.abi, geb.provider).getPoolInfo()
-    ]);
+        new ethers.Contract(nftPool, NFTPool__factory.abi, geb.provider).getPoolInfo(),
+    ])
 
     const defiEdgeInfo = await new ethers.Contract(
         nftPoolInfo.lpToken,
@@ -94,28 +90,18 @@ const fetchNitroPool = async (geb: Geb, poolAddress: string, userAddress: string
 
     const poolInfo = await new ethers.Contract(defiEdgeInfo, AlgebraPool__factory.abi, geb.provider)
 
-    const [
-        collateralToken0Address,
-        collateralToken1Address
-    ] = await Promise.all([
-        poolInfo.token0(),
-        poolInfo.token1()
-    ]);
+    const [collateralToken0Address, collateralToken1Address] = await Promise.all([poolInfo.token0(), poolInfo.token1()])
 
     const collateralToken0 = new ethers.Contract(collateralToken0Address, ERC20__factory.abi, geb.provider)
     const collateralToken1 = new ethers.Contract(collateralToken1Address, ERC20__factory.abi, geb.provider)
 
-    const [
-        poolCollateral0BalanceBN,
-        poolCollateral1BalanceBN,
-        poolCollateral0Symbol,
-        poolCollateral1Symbol
-    ] = await Promise.all([
-        collateralToken0.balanceOf(defiEdgeInfo),
-        collateralToken1.balanceOf(defiEdgeInfo),
-        collateralToken0.symbol(),
-        collateralToken1.symbol()
-    ]);
+    const [poolCollateral0BalanceBN, poolCollateral1BalanceBN, poolCollateral0Symbol, poolCollateral1Symbol] =
+        await Promise.all([
+            collateralToken0.balanceOf(defiEdgeInfo),
+            collateralToken1.balanceOf(defiEdgeInfo),
+            collateralToken0.symbol(),
+            collateralToken1.symbol(),
+        ])
 
     const { OD_market_price_float, WETH_market_price_float } = await getOracleData(geb)
 
