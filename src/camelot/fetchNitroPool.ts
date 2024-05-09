@@ -74,7 +74,7 @@ const fetchNitroPool = async (geb: Geb, poolAddress: string, userAddress: string
     ])
 
     const rewardsContractToken1 = new ethers.Contract(nitroRewards1[0], ERC20__factory.abi, geb.provider)
-    const rewardsContractToken2 = new ethers.Contract(nitroRewards1[0], ERC20__factory.abi, geb.provider)
+    const rewardsContractToken2 = new ethers.Contract(nitroRewards2[0], ERC20__factory.abi, geb.provider)
 
     const [rewardsToken1Symbol, rewardsToken2Symbol, nftPoolInfo] = await Promise.all([
         rewardsContractToken1.symbol(),
