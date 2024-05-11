@@ -38,6 +38,8 @@ export class ContractApis {
 
     public tokenCollateralJoin: { [key: string]: types.ICoinJoin }
     public tokenCollateralAuctionHouse: { [key: string]: types.ICollateralAuctionHouse }
+    public camelotWSTETHNitroPool: types.CamelotNitroPool
+    public multicall: types.Multicall3
 
     constructor(
         network: GebDeployment,
@@ -79,5 +81,6 @@ export class ContractApis {
             const collateralAuctionHouse = types.ICollateralAuctionHouse__factory.connect(token.collateralAuctionHouse, signerOrProvider)            
             return { ...accum, [token.symbol]: collateralAuctionHouse }
         }, {})
+        this.multicall = types.Multicall3__factory.connect(addressList.MULTICALL, signerOrProvider)
     }
 }
