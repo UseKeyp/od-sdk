@@ -97,8 +97,8 @@ const fetchNitroPool = async (geb: Geb, poolAddress: string, userAddress: string
 
     const [poolCollateral0BalanceBN, poolCollateral1BalanceBN, poolCollateral0Symbol, poolCollateral1Symbol] =
         await Promise.all([
-            collateralToken0.balanceOf(defiEdgeInfo),
-            collateralToken1.balanceOf(defiEdgeInfo),
+            collateralToken0.balanceOf(poolAddress),
+            collateralToken1.balanceOf(poolAddress),
             collateralToken0.symbol(),
             collateralToken1.symbol(),
         ])
