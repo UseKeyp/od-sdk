@@ -1,6 +1,12 @@
 import { BigNumber, ethers } from 'ethers'
 
-import { CamelotNitroPool__factory, NFTPool__factory, LPtoken__factory, CamelotPool__factory } from '../typechained'
+import {
+    CamelotNitroPool__factory,
+    NFTPool__factory,
+    LPtoken__factory,
+    CamelotPool__factory,
+    ERC20__factory,
+} from '../typechained'
 
 export type NitroPoolDetails = {
     tvl: number
@@ -42,7 +48,10 @@ export type NitroPoolDetails = {
 }
 
 const getContract = (address: string, abi: any, provider: any) => new ethers.Contract(address, abi, provider)
-
+const checkIsZeroAddress = (address: string) => {
+    // check if the address is 0x
+    return address === '0x0000000000000000000000000000000000000000'
+}
 const fromBigNumber = (BN: BigNumber, decimals = 18) => {
     return parseFloat(ethers.utils.formatUnits(BN.toString(), decimals))
 }
@@ -59,11 +68,11 @@ const dataFromSpNFTs = async (
     const nitroData = res.data.nitros[nitroPoolAddress]
 
     const spNFTAddress = nitroData.nftPool
-    const spNFTContract = getContract(spNFTAddress, NFTPool__factory, provider)
+    const spNFTContract = getContract(spNFTAddress, NFTPool__factory.abi, provider)
 
     // Validate LP collateral tokens match expected values
     const poolInfo = await spNFTContract.getPoolInfo()
-    const lpToken = getContract(poolInfo.lpToken, LPtoken__factory, provider)
+    const lpToken = getContract(poolInfo.lpToken, LPtoken__factory.abi, provider)
     const lpCollateral0Address = await lpToken.token0()
     const lpCollateral1Address = await lpToken.token1()
 
@@ -75,7 +84,7 @@ const dataFromSpNFTs = async (
     }
 
     // Get LP Balance for all spNFTs owned by user
-    const spNFTCount = await spNFTContract.balanceOf(userAddress)
+    const spNFTCount = checkIsZeroAddress(userAddress) ? 0 : await spNFTContract.balanceOf(userAddress)
     let lpBalance = 0
     for (let i = 0; i < spNFTCount; i++) {
         const tokenId = await spNFTContract.tokenOfOwnerByIndex(userAddress, i)
@@ -97,14 +106,14 @@ const dataFromSpNFTs = async (
 
     return {
         tvlUSD: relevantNftPool.tvlUSD,
-        minIncentivesApr: relevantNftPool.minIncentivesApr,
+        apy: relevantNftPool.minIncentivesApr,
         userShare,
         userDollarValue,
     }
 }
 
 const dataFromNitroPool = async (userAddress: string, nitroPoolAddress: string, provider: any) => {
-    const camelotNitroPool = getContract(nitroPoolAddress, CamelotNitroPool__factory, provider)
+    const camelotNitroPool = getContract(nitroPoolAddress, CamelotNitroPool__factory.abi, provider)
 
     const userInfo = await camelotNitroPool.userInfo(userAddress)
     const userDepositAmount = fromBigNumber(userInfo.totalDepositAmount)
@@ -128,6 +137,7 @@ const dataFromNitroPool = async (userAddress: string, nitroPoolAddress: string, 
         startTime: nitroData.startTime,
         endTime: nitroData.endTime,
         tvlUSD: nitroData.tvlUSD,
+        apy: nitroData.incentivesApr,
         userPoolPercentage,
         userDollarValue,
     }
@@ -139,7 +149,7 @@ const fetchNitroPool = async (
     nitroPoolAddress: string,
     provider: any
 ) => {
-    const camelotPool = getContract(camelotPoolAddress, CamelotPool__factory, provider)
+    const camelotPool = getContract(camelotPoolAddress, CamelotPool__factory.abi, provider)
 
     // Only used to validate LP collateral tokens match expected values
     const collateral0Address = await camelotPool.token0()
@@ -154,9 +164,25 @@ const fetchNitroPool = async (
     )
 
     const nitroData = await dataFromNitroPool(userAddress, nitroPoolAddress, provider)
-    const userDollarValue = nitroData.userDollarValue + spNftData.userDollarValue
+    const { rewardsToken1, rewardsToken2 } = nitroData
 
-    return { nitroData, spNftData, userDollarValue }
+    const collateral0TokenSymbol = await getContract(collateral0Address, ERC20__factory.abi, provider).symbol()
+    const collateral1TokenSymbol = await getContract(collateral1Address, ERC20__factory.abi, provider).symbol()
+    const rewardToken1Symbol = await getContract(rewardsToken1, ERC20__factory.abi, provider).symbol()
+    const rewardToken2Symbol = checkIsZeroAddress(rewardsToken2)
+        ? ''
+        : await getContract(rewardsToken2, ERC20__factory.abi, provider).symbol()
+
+    const userDollarValue = nitroData.userDollarValue + spNftData.userDollarValue
+    return {
+        nitroData,
+        spNftData,
+        userDollarValue,
+        collateral0TokenSymbol,
+        collateral1TokenSymbol,
+        rewardToken1Symbol,
+        rewardToken2Symbol,
+    }
 }
 
 export { fetchNitroPool }
