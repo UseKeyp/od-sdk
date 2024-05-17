@@ -1,15 +1,6 @@
 import { BigNumber, ethers } from 'ethers'
 
-import {
-    AlgebraPool__factory,
-    CamelotNitroPool__factory,
-    DefiEdgeTwapStrategy__factory,
-    ERC20__factory,
-    NFTPool__factory,
-} from '../typechained'
-import { Geb } from '../geb'
-import { fromBigNumber, SECONDS_IN_YEAR } from '../utils'
-import { getOracleData } from '../virtual'
+import { CamelotNitroPool__factory, NFTPool__factory, LPtoken__factory, CamelotPool__factory } from '../typechained'
 
 export type NitroPoolDetails = {
     tvl: number
@@ -50,101 +41,122 @@ export type NitroPoolDetails = {
     }[]
 }
 
-const fetchNitroPool = async (geb: Geb, poolAddress: string, userAddress: string): Promise<NitroPoolDetails> => {
-    const camelotNitroPool = new ethers.Contract(poolAddress, CamelotNitroPool__factory.abi, geb.provider)
+const getContract = (address: string, abi: any, provider: any) => new ethers.Contract(address, abi, provider)
 
-    const [
-        pendingRewards,
-        settings,
-        nitroRewards1,
-        nitroRewards2,
-        nftPool,
-        nitroRewardsPerSecond,
-        userInfo,
-        oracleData,
-    ] = await Promise.all([
-        camelotNitroPool.pendingRewards(userAddress),
-        camelotNitroPool.settings(),
-        camelotNitroPool.rewardsToken1(),
-        camelotNitroPool.rewardsToken2(),
-        camelotNitroPool.nftPool(),
-        camelotNitroPool.rewardsToken1PerSecond(),
-        userAddress ? camelotNitroPool.userInfo(userAddress) : Promise.resolve(null),
-        getOracleData(geb),
-    ])
+const fromBigNumber = (BN: BigNumber, decimals = 18) => {
+    return parseFloat(ethers.utils.formatUnits(BN.toString(), decimals))
+}
 
-    const rewardsContractToken1 = new ethers.Contract(nitroRewards1[0], ERC20__factory.abi, geb.provider)
-    const rewardsContractToken2 = new ethers.Contract(nitroRewards2[0], ERC20__factory.abi, geb.provider)
+const dataFromSpNFTs = async (
+    userAddress: string,
+    nitroPoolAddress: string,
+    collateral0Address: string,
+    collateral1Address: string,
+    provider: any
+) => {
+    let response = await fetch('https://api.camelot.exchange/nitros/')
+    let res = await response.json()
+    const nitroData = res.data.nitros[nitroPoolAddress]
 
-    const [rewardsToken1Symbol, rewardsToken2Symbol, nftPoolInfo] = await Promise.all([
-        rewardsContractToken1.symbol(),
-        rewardsContractToken2.symbol(),
-        new ethers.Contract(nftPool, NFTPool__factory.abi, geb.provider).getPoolInfo(),
-    ])
+    const spNFTAddress = nitroData.nftPool
+    const spNFTContract = getContract(spNFTAddress, NFTPool__factory, provider)
 
-    const defiEdgeInfo = await new ethers.Contract(
-        nftPoolInfo.lpToken,
-        DefiEdgeTwapStrategy__factory.abi,
-        geb.provider
-    ).pool()
+    // Validate LP collateral tokens match expected values
+    const poolInfo = await spNFTContract.getPoolInfo()
+    const lpToken = getContract(poolInfo.lpToken, LPtoken__factory, provider)
+    const lpCollateral0Address = await lpToken.token0()
+    const lpCollateral1Address = await lpToken.token1()
 
-    const poolInfo = await new ethers.Contract(defiEdgeInfo, AlgebraPool__factory.abi, geb.provider)
-
-    const [collateralToken0Address, collateralToken1Address] = await Promise.all([poolInfo.token0(), poolInfo.token1()])
-
-    const collateralToken0 = new ethers.Contract(collateralToken0Address, ERC20__factory.abi, geb.provider)
-    const collateralToken1 = new ethers.Contract(collateralToken1Address, ERC20__factory.abi, geb.provider)
-
-    const [poolCollateral0BalanceBN, poolCollateral1BalanceBN, poolCollateral0Symbol, poolCollateral1Symbol] =
-        await Promise.all([
-            collateralToken0.balanceOf(poolAddress),
-            collateralToken1.balanceOf(poolAddress),
-            collateralToken0.symbol(),
-            collateralToken1.symbol(),
-        ])
-
-    const { OD_market_price_float, WETH_market_price_float } = await getOracleData(geb)
-
-    const collateralTokens = [
-        {
-            symbol: poolCollateral0Symbol,
-            balance: fromBigNumber(poolCollateral0BalanceBN),
-            address: collateralToken0Address,
-            price: OD_market_price_float,
-        },
-        {
-            symbol: poolCollateral1Symbol,
-            balance: fromBigNumber(poolCollateral1BalanceBN),
-            address: collateralToken1Address,
-            price: WETH_market_price_float,
-        },
-    ]
-    const rewardTokens = [
-        { address: nitroRewards1[0], symbol: rewardsToken1Symbol },
-        { address: nitroRewards2[0], symbol: rewardsToken2Symbol },
-    ]
-    const poolCollateral1Balance = fromBigNumber(poolCollateral0BalanceBN)
-    const poolCollateral2Balance = fromBigNumber(poolCollateral1BalanceBN)
-
-    const tvl = poolCollateral1Balance * OD_market_price_float + poolCollateral2Balance * WETH_market_price_float
-    const rewardsPerSecond = fromBigNumber(nitroRewardsPerSecond)
-    const lpTokenBalance = userInfo ? fromBigNumber(userInfo.totalDepositAmount) : 0
-
-    const apy = (rewardsPerSecond * SECONDS_IN_YEAR * OD_market_price_float) / tvl
-    return {
-        tvl,
-        pendingRewards: {
-            pending1: fromBigNumber(pendingRewards[0]),
-            pending2: fromBigNumber(pendingRewards[1]),
-        },
-        settings,
-        rewardsPerSecond,
-        lpTokenBalance,
-        rewardTokens,
-        userInfo,
-        apy,
-        collateralTokens,
+    if (
+        lpCollateral0Address.toLowerCase() !== collateral0Address.toLowerCase() ||
+        lpCollateral1Address.toLowerCase() !== collateral1Address.toLowerCase()
+    ) {
+        throw 'fetchSpNFTBalances - Invalid LP Token'
     }
+
+    // Get LP Balance for all spNFTs owned by user
+    const spNFTCount = await spNFTContract.balanceOf(userAddress)
+    let lpBalance = 0
+    for (let i = 0; i < spNFTCount; i++) {
+        const tokenId = await spNFTContract.tokenOfOwnerByIndex(userAddress, i)
+
+        const positionDetails = await spNFTContract.getStakingPosition(tokenId)
+        lpBalance += fromBigNumber(positionDetails.amount)
+    }
+
+    // Convert LP Balance to dollar value
+    response = await fetch('https://api.camelot.exchange/nft-pools/')
+    res = await response.json()
+
+    let nftPools = Object.values(res.data.nftPools)
+    let relevantNftPool: any = nftPools.find((pool: any) => pool.address === spNFTAddress)
+
+    // Calculate the user's share
+    const userShare = lpBalance / fromBigNumber(relevantNftPool.totalDeposit)
+    const userDollarValue = userShare * relevantNftPool.tvlUSD
+
+    return {
+        tvlUSD: relevantNftPool.tvlUSD,
+        minIncentivesApr: relevantNftPool.minIncentivesApr,
+        userShare,
+        userDollarValue,
+    }
+}
+
+const dataFromNitroPool = async (userAddress: string, nitroPoolAddress: string, provider: any) => {
+    const camelotNitroPool = getContract(nitroPoolAddress, CamelotNitroPool__factory, provider)
+
+    const userInfo = await camelotNitroPool.userInfo(userAddress)
+    const userDepositAmount = fromBigNumber(userInfo.totalDepositAmount)
+
+    // Convert LP Balance to dollar value
+    const response = await fetch('https://api.camelot.exchange/nitros/')
+    const res = await response.json()
+    const nitroData = res.data.nitros[nitroPoolAddress]
+
+    const userPoolPercentage = userDepositAmount / parseFloat(ethers.utils.formatUnits(nitroData.totalDepositAmount))
+    const userDollarValue = userPoolPercentage * nitroData.tvlUSD
+
+    return {
+        rewardsToken1: nitroData.rewardsToken1,
+        rewardsToken2: nitroData.rewardsToken2,
+        rewardsToken1PerSecond: nitroData.rewardsToken1PerSecond,
+        rewardsToken2PerSecond: nitroData.rewardsToken2PerSecond,
+        rewardsToken1RemainingAmount: nitroData.rewardsToken1RemainingAmount,
+        rewardsToken2RemainingAmount: nitroData.rewardsToken2RemainingAmount,
+        totalDepositAmount: nitroData.totalDepositAmount,
+        startTime: nitroData.startTime,
+        endTime: nitroData.endTime,
+        tvlUSD: nitroData.tvlUSD,
+        userPoolPercentage,
+        userDollarValue,
+    }
+}
+
+const fetchNitroPool = async (
+    userAddress: string,
+    camelotPoolAddress: string,
+    nitroPoolAddress: string,
+    provider: any
+) => {
+    const camelotPool = getContract(camelotPoolAddress, CamelotPool__factory, provider)
+
+    // Only used to validate LP collateral tokens match expected values
+    const collateral0Address = await camelotPool.token0()
+    const collateral1Address = await camelotPool.token1()
+
+    const spNftData = await dataFromSpNFTs(
+        userAddress,
+        nitroPoolAddress,
+        collateral0Address,
+        collateral1Address,
+        provider
+    )
+
+    const nitroData = await dataFromNitroPool(userAddress, nitroPoolAddress, provider)
+    const userDollarValue = nitroData.userDollarValue + spNftData.userDollarValue
+
+    return { nitroData, spNftData, userDollarValue }
 }
 
 export { fetchNitroPool }
