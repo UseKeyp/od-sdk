@@ -67,10 +67,10 @@ export const fetchCollateralAuctionEvents = async (address: string, subgraph: st
             where: {address: "${address}"}
         ) {
             address
-            _id: _auctionId
-            _amountToRaise
-            _amountToSell
-            _auctionId
+            _id: auctionId
+            _amountToRaise: amountToRaise
+            _amountToSell: amountToSell
+            _auctionId: auctionId
             transactionHash
             _blockTimestamp: blockTimestamp
         }
@@ -79,10 +79,10 @@ export const fetchCollateralAuctionEvents = async (address: string, subgraph: st
             orderDirection: asc
             where: {address: "${address}"}
         ){
-            _id: _auctionId
-            _bidder
-            _raisedAmount
-            _soldAmount
+            _id: auctionId
+            _bidder: bidder
+            _raisedAmount: raisedAmount
+            _soldAmount: soldAmount
             transactionHash
             _blockTimestamp: blockTimestamp
         }
@@ -92,9 +92,9 @@ export const fetchCollateralAuctionEvents = async (address: string, subgraph: st
             where: {address: "${address}"}
           ){
             _blockTimestamp: blockTimestamp
-            _leftoverReceiver
-            _leftoverCollateral
-            _auctionId
+            _leftoverReceiver: leftoverReceiver
+            _leftoverCollateral: leftoverCollateral
+            _auctionId: auctionId
             transactionHash
         }
     }`
@@ -104,35 +104,35 @@ export const fetchCollateralAuctionEvents = async (address: string, subgraph: st
 export const fetchDebtAuctionEvents = async (fromBlock: number, subgraph: string): Promise<any> => {
     const query = `query DebtAuctionEvents {
         restartAuctions: debtAuctionHouseRestartAuctions(orderBy: blockNumber, orderDirection: desc) {
-          _auctionDeadline
-          _id: _auctionId
+          _auctionDeadline: auctionDeadline
+          _id: auctionId
           blockNumber
           _blockTimestamp: blockTimestamp
           transactionHash
         }
         settledAuctions: debtAuctionHouseSettleAuctions(orderBy: blockNumber, orderDirection: desc) {
-          _id: _auctionId
-          _highBidder
-          _raisedAmount
+          _id: auctionId
+          _highBidder: highBidder
+          _raisedAmount: raisedAmount
           blockNumber
           _blockTimestamp: blockTimestamp
           transactionHash
         }
         startAuction: debtAuctionHouseStartAuctions(orderBy: blockNumber, orderDirection: desc) {
-          _id: _auctionId
-          _amountToRaise
-          _amountToSell
-          _auctionDeadline
+          _id: auctionId
+          _amountToRaise: amountToRaise
+          _amountToSell: amountToSell
+          _auctionDeadline: auctionDeadline
           blockNumber
           _blockTimestamp: blockTimestamp
           transactionHash
         }
         bidEvents: debtAuctionHouseDecreaseSoldAmounts(orderBy: blockNumber, orderDirection: desc) {
-          _id: _auctionId
-          _bidExpiry
-          _bidder
-          _raisedAmount
-          _soldAmount
+          _id: auctionId
+          _bidExpiry: bidExpiry
+          _bidder: bidder
+          _raisedAmount: raisedAmount
+          _soldAmount: soldAmount
           blockNumber
           _blockTimestamp: blockTimestamp
           transactionHash
@@ -144,35 +144,35 @@ export const fetchDebtAuctionEvents = async (fromBlock: number, subgraph: string
 export const fetchSurplusAuctionEvents = async (fromBlock: number, subgraph: string): Promise<any> => {
     const query = `query SurplusAuctionEvents {
         startAuction: surplusAuctionHouseStartAuctions(orderBy: blockNumber, orderDirection: desc) {
-          _id: _auctionId
-          _amountToRaise
-          _amountToSell
-          _auctionDeadline
+          _id: auctionId
+          _amountToRaise: amountToRaise
+          _amountToSell: amountToSell
+          _auctionDeadline: auctionDeadline
           blockNumber
           _blockTimestamp: blockTimestamp
           transactionHash
         }
         bidEvents: surplusAuctionHouseIncreaseBidSizes(orderBy: blockNumber, orderDirection: desc) {
-          _id: _auctionId
-          _bidExpiry
-          _bidder
-          _raisedAmount
-          _soldAmount
+          _id: auctionId
+          _bidExpiry: bidExpiry
+          _bidder: bidder
+          _raisedAmount: raisedAmount
+          _soldAmount: soldAmount
           blockNumber
           _blockTimestamp: blockTimestamp
           transactionHash
         }
         restartAuctions: surplusAuctionHouseRestartAuctions(orderBy: blockNumber, orderDirection: desc) {
-          _id: _auctionId
-          _auctionDeadline
+          _id: auctionId
+          _auctionDeadline: auctionDeadline
           blockNumber
           _blockTimestamp: blockTimestamp
           transactionHash
         }
         settledAuctions: surplusAuctionHouseSettleAuctions(orderBy: blockNumber, orderDirection: desc) {
-          _id: _auctionId
-          _highBidder
-          _raisedAmount
+          _id: auctionId
+          _highBidder: highBidder
+          _raisedAmount: raisedAmount
           blockNumber
           _blockTimestamp: blockTimestamp
           transactionHash

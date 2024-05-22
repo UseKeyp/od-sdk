@@ -355,7 +355,7 @@ const tokens: Record<GebDeployment, TokenList> = {
 
 const subgraphs: Record<GebDeployment, string> = {
     'arbitrum-sepolia': 'https://api.studio.thegraph.com/query/52770/open-dollar---testnet/v1.6.5-rc.1',
-    arbitrum: 'https://api.studio.thegraph.com/query/52770/open-dollar---mainnet/v1.7.0',
+    arbitrum: 'https://api.studio.thegraph.com/query/52770/open-dollar---mainnet/v1.8.0-rc.1',
     optimism: 'https://api.studio.thegraph.com/query/52770/open-dollar---testnet/v1.6.5-rc.1',
 }
 
