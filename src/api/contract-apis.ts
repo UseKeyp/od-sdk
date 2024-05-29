@@ -22,6 +22,7 @@ export class ContractApis {
     public taxCollector: types.ITaxCollector
     public liquidationEngine: types.ILiquidationEngine
     public oracleRelayer: types.IOracleRelayer
+    public ethOracle: types.IChainlinkRelayerChild
     public globalSettlement: types.IGlobalSettlement
     public debtAuctionHouse: types.IDebtAuctionHouse
     public surplusAuctionHouse: types.ISurplusAuctionHouse
@@ -63,6 +64,7 @@ export class ContractApis {
         this.taxCollector = types.ITaxCollector__factory.connect(addressList.GEB_TAX_COLLECTOR, signerOrProvider)
         this.liquidationEngine = types.ILiquidationEngine__factory.connect(addressList.GEB_LIQUIDATION_ENGINE, signerOrProvider)
         this.oracleRelayer = types.IOracleRelayer__factory.connect(addressList.GEB_ORACLE_RELAYER, signerOrProvider)
+        this.ethOracle = types.IChainlinkRelayerChild__factory.connect(addressList.ETH_ORACLE, signerOrProvider)
         this.globalSettlement = types.IGlobalSettlement__factory.connect(addressList.GEB_GLOBAL_SETTLEMENT, signerOrProvider)
         this.debtAuctionHouse = types.IDebtAuctionHouse__factory.connect(addressList.GEB_DEBT_AUCTION_HOUSE, signerOrProvider)
         this.surplusAuctionHouse = types.ISurplusAuctionHouse__factory.connect(addressList.GEB_SURPLUS_AUCTION_HOUSE, signerOrProvider)
