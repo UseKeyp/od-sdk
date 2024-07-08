@@ -8,7 +8,7 @@ interface SafeData {
     lockedCollateral: BigNumber
     generatedDebt: BigNumber
     collateralType: string
-    internalBalance?: BigNumber
+    internalBalance: BigNumber
 }
 
 export async function fetchUserSafes(geb: Geb, userAddress: string): Promise<[BigNumber, SafeData[]]> {
@@ -38,7 +38,8 @@ export async function fetchUserSafes(geb: Geb, userAddress: string): Promise<[Bi
                 uint256 id, 
                 uint256 lockedCollateral, 
                 uint256 generatedDebt, 
-                bytes32 collateralType
+                bytes32 collateralType,
+                uint256 internalBalance
                 )[]`,
         ],
         returnedData
@@ -47,16 +48,5 @@ export async function fetchUserSafes(geb: Geb, userAddress: string): Promise<[Bi
     const coinBalance = decoded[0]
     const safesData = decoded[1]
 
-    // Fetch the internal balance for each safe
-    const updatedSafesData = await Promise.all(
-        safesData.map(async (safe) => {
-            const internalBalance = await geb.contracts.safeEngine.tokenCollateral(safe.collateralType, safe.addy)
-            return {
-                ...safe,
-                internalBalance,
-            }
-        })
-    )
-
-    return [coinBalance, updatedSafesData]
+    return [coinBalance, safesData]
 }
