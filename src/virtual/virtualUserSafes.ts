@@ -8,6 +8,7 @@ interface SafeData {
     lockedCollateral: BigNumber
     generatedDebt: BigNumber
     collateralType: string
+    internalBalance: BigNumber
 }
 
 export async function fetchUserSafes(geb: Geb, userAddress: string): Promise<[BigNumber, SafeData[]]> {
@@ -37,11 +38,15 @@ export async function fetchUserSafes(geb: Geb, userAddress: string): Promise<[Bi
                 uint256 id, 
                 uint256 lockedCollateral, 
                 uint256 generatedDebt, 
-                bytes32 collateralType
+                bytes32 collateralType,
+                uint256 internalBalance
                 )[]`,
         ],
         returnedData
     ) as [BigNumber, SafeData[]]
 
-    return decoded
+    const coinBalance = decoded[0]
+    const safesData = decoded[1]
+
+    return [coinBalance, safesData]
 }

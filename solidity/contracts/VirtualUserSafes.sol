@@ -23,6 +23,7 @@ interface ISAFEEngine {
     }
 
     function safes(bytes32 collateralType, address safe) external view returns (SafeDeposit memory _safe);
+    function tokenCollateral(bytes32 collateralType, address safe) external view returns (uint256);
 }
 
 contract VirtualUserSafes {
@@ -32,6 +33,7 @@ contract VirtualUserSafes {
         uint256 lockedCollateral;
         uint256 generatedDebt;
         bytes32 collateralType;
+        uint256 internalBalance;
     }
 
     constructor(
@@ -62,12 +64,14 @@ contract VirtualUserSafes {
             safesData = new SafeData[](safes.length);
             for (uint256 i = 0; i < safes.length; i++) {
                 ISAFEEngine.SafeDeposit memory _safeData = safeEngine.safes(_cTypes[i], safes[i]);
+                uint256 _internalBalance = safeEngine.tokenCollateral(_cTypes[i], safes[i]);
                 safesData[i] = SafeData(
                     safes[i],
                     ids[i],
                     _safeData.lockedCollateral,
                     _safeData.generatedDebt,
-                    _cTypes[i]
+                    _cTypes[i],
+                    _internalBalance
                 );
             }
         }
