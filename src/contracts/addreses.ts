@@ -194,12 +194,12 @@ const tokens: Record<GebDeployment, TokenList> = {
         },
         WETH: {
             address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
-            collateralJoin: '',
-            collateralAuctionHouse: '',
+            collateralJoin: '0x7a8e9f2b3507fcc4b90d8f9bed92fc4f1feebfb1',
+            collateralAuctionHouse: '0x293b702362918e990Dd5f48a80fB139FeAd64263',
             decimals: 18,
             symbol: 'WETH',
             bytes32String: WETH,
-            isCollateral: false,
+            isCollateral: true,
             chainlinkRelayer: '0x3e6C1621f674da311E57646007fBfAd857084383',
         },
         WSTETH: {
