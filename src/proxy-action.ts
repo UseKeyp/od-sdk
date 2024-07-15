@@ -144,6 +144,22 @@ export class BasicActions {
 
     // ==== Basic Actions ====
 
+    collectTokenCollateral(
+        managerAddress: string,
+        collateralJoinAddress: string,
+        safeId: BigNumberish,
+        deltaWad: BigNumberish
+    ) {
+        return this.getProxiedTransactionRequest(
+            this.proxyActionCore.populateTransaction.collectTokenCollateral(
+                managerAddress,
+                collateralJoinAddress,
+                safeId,
+                deltaWad
+            )
+        )
+    }
+
     exitTokenCollateral(collateralJoin: string, amt: BigNumberish): Promise<ethers.PopulatedTransaction> {
         return this.getProxiedTransactionRequest(
             this.proxyActionCore.populateTransaction.exitCollateral(collateralJoin, amt)
