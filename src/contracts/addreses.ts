@@ -1,4 +1,4 @@
-import { WETH, ARB, OD, WSTETH, CBETH, RETH, OP, PUFETH } from '../utils'
+import { WETH, ARB, OD, WSTETH, CBETH, RETH, OP, GRT, PUFETH } from '../utils'
 
 // All keys are mandatory
 export type ContractKey =
@@ -227,6 +227,15 @@ const tokens: Record<GebDeployment, TokenList> = {
             decimals: 18,
             symbol: 'ARB',
             bytes32String: ARB,
+            isCollateral: true,
+        },
+        GRT: {
+            address: '0x9623063377ad1b27544c965ccd7342f7ea7e88c7',
+            collateralJoin: '0x1c56b6c581816cf08e6550c9b7025bae1e0dd055',
+            collateralAuctionHouse: '0xb043a91c26b79620aaa06c02ddcd78f3649b27cf',
+            decimals: 18,
+            symbol: 'GRT',
+            bytes32String: GRT,
             isCollateral: true,
         },
     },
