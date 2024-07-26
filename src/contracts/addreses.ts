@@ -1,4 +1,17 @@
-import { WETH, ARB, OD, WSTETH, CBETH, RETH, OP, GRT, PUFETH, PT_wstETH_26JUN2025, PT_rETH_26JUN2025 } from '../utils'
+import {
+    WETH,
+    ARB,
+    OD,
+    WSTETH,
+    CBETH,
+    RETH,
+    OP,
+    GRT,
+    PUFETH,
+    PT_wstETH_26JUN2025,
+    PT_rETH_26JUN2025,
+    ARB_Griff,
+} from '../utils'
 
 // All keys are mandatory
 export type ContractKey =
@@ -254,6 +267,15 @@ const tokens: Record<GebDeployment, TokenList> = {
             decimals: 18,
             symbol: 'PT-wstETH-26JUN2025',
             bytes32String: PT_wstETH_26JUN2025,
+            isCollateral: true,
+        },
+        'ARB-Griff': {
+            address: '0x912CE59144191C1204E64559FE8253a0e49E6548',
+            collateralJoin: '', // Pending execution of Pendle asset proposal
+            collateralAuctionHouse: '', // Pending execution of Pendle asset proposal
+            decimals: 18,
+            symbol: 'ARB-Griff',
+            bytes32String: ARB_Griff,
             isCollateral: true,
         },
     },
