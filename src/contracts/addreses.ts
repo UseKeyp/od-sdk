@@ -271,8 +271,8 @@ const tokens: Record<GebDeployment, TokenList> = {
         },
         'ARB-Griff': {
             address: '0x912CE59144191C1204E64559FE8253a0e49E6548',
-            collateralJoin: '', // Pending execution of Pendle asset proposal
-            collateralAuctionHouse: '', // Pending execution of Pendle asset proposal
+            collateralJoin: '0x9c4dea4c1e4c9300c8eb67356e701cafdb966c37',
+            collateralAuctionHouse: '0x4fb268e154571b7a99f85d69732255b16b98b4b4',
             decimals: 18,
             symbol: 'ARB-Griff',
             bytes32String: ARB_Griff,
