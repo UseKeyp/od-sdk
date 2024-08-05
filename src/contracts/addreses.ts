@@ -1,4 +1,17 @@
-import { WETH, ARB, OD, WSTETH, CBETH, RETH, OP, GRT, PUFETH } from '../utils'
+import {
+    WETH,
+    ARB,
+    OD,
+    WSTETH,
+    CBETH,
+    RETH,
+    OP,
+    GRT,
+    PUFETH,
+    PT_wstETH_26JUN2025,
+    PT_rETH_26JUN2025,
+    ARB_Griff,
+} from '../utils'
 
 // All keys are mandatory
 export type ContractKey =
@@ -236,6 +249,33 @@ const tokens: Record<GebDeployment, TokenList> = {
             decimals: 18,
             symbol: 'GRT',
             bytes32String: GRT,
+            isCollateral: true,
+        },
+        'PT-rETH-26JUN2025': {
+            address: '0x685155D3BD593508Fe32Be39729810A591ED9c87',
+            collateralJoin: '0x3bdbf35fda5b7235e7a381466c436392f259c22c',
+            collateralAuctionHouse: '0x2cC2D6b1027E4d56D6C73dFb8624142F6ac478D5',
+            decimals: 18,
+            symbol: 'PT-rETH-26JUN2025',
+            bytes32String: PT_rETH_26JUN2025,
+            isCollateral: true,
+        },
+        'PT-wstETH-26JUN2025': {
+            address: '0x1255638EFeca62e12E344E0b6B22ea853eC6e2c7',
+            collateralJoin: '0xe4c6aff8d5733905d35cb590a52ee51318d27f49',
+            collateralAuctionHouse: '0xd5Bf49BE72D6c2dbaB744086cD879C18b8071E65',
+            decimals: 18,
+            symbol: 'PT-wstETH-26JUN2025',
+            bytes32String: PT_wstETH_26JUN2025,
+            isCollateral: true,
+        },
+        'ARB-Griff': {
+            address: '0x912CE59144191C1204E64559FE8253a0e49E6548',
+            collateralJoin: '0x9c4dea4c1e4c9300c8eb67356e701cafdb966c37',
+            collateralAuctionHouse: '0x4fb268e154571b7a99f85d69732255b16b98b4b4',
+            decimals: 18,
+            symbol: 'ARB-Griff',
+            bytes32String: ARB_Griff,
             isCollateral: true,
         },
     },
